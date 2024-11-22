@@ -9,8 +9,7 @@ project(argos_bridge_test)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
   roscpp
-  rospy
-  std_msgs
+  geometry_msgs
   message_generation
 )
 

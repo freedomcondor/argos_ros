@@ -5,77 +5,87 @@
 
 #include "drone_ros_bridge_controller.h"
 
-#include <argos3/plugins/robots/drone/control_interface/ci_drone_flight_system_actuator.h>
-#include <argos3/plugins/robots/drone/control_interface/ci_drone_flight_system_sensor.h>
-#include <argos3/plugins/robots/drone/control_interface/ci_drone_cameras_system_sensor.h>
-
-#include <extensions/debug/debug_default_actuator.h>
-
-//ros
-#include "ros/ros.h"
-#include "std_msgs/String.h"
+#include <argos3/core/utility/math/vector3.h>
+#include <argos3/core/utility/math/quaternion.h>
 
 using namespace std;
 
 namespace argos {
-   // Initialize ROS node.  There will be only one ROS node no matter how many robots are created in
-   // ARGoS.  However, we will have one instance of the CArgosRosBot class for each ARGoS robot.
-   ros::NodeHandle* initROS() {
-      int argc = 0;
-      char *argv = (char *) "";
-      ros::init(argc, &argv, "argos_ros_bridge");
-      return new ros::NodeHandle();
-   }
+	// Initialize ROS node.  There will be only one ROS node no matter how many robots are created in
+	// ARGoS.  However, we will have one instance of the CArgosRosBot class for each ARGoS robot.
+	ros::NodeHandle* initROS() {
+		int argc = 0;
+		char *argv = (char *) "";
+		ros::init(argc, &argv, "argos_ros_bridge");
+		return new ros::NodeHandle();
+	}
 
-   ros::NodeHandle* CTestController::nodeHandle = initROS();
+	ros::NodeHandle* CDroneController::nodeHandle = initROS();
 
-   /****************************************/
-   /****************************************/
+	/****************************************/
+	/****************************************/
 
-   void CTestController::Init(TConfigurationNode& t_tree) {
-      CCI_DroneFlightSystemActuator* pcActuator =
-         GetActuator<CCI_DroneFlightSystemActuator>("drone_flight_system");
-      pcActuator->SetTargetPosition(CVector3(4.0, 0.0, 1.0));
+	void CDroneController::Init(TConfigurationNode& t_tree) {
+		//Get flight system actuator / sensor
+		m_pcFlightSystemActuator = GetActuator<CCI_DroneFlightSystemActuator>("drone_flight_system");
+		m_pcFlightSystemSensor = GetSensor<CCI_DroneFlightSystemSensor>("drone_flight_system");
 
-      CCI_DroneCamerasSystemSensor* pcCameraSensor =
-         GetSensor<CCI_DroneCamerasSystemSensor>("drone_cameras_system");
-      pcCameraSensor->Visit(
-         [](CCI_DroneCamerasSystemSensor::SInterface& s_interface) {
-            s_interface.Enable();
-         }
-      );
+		//m_pcFlightSystemActuator->SetTargetPosition(CVector3(4.0, 0.0, 1.0));
 
-      stringstream sensorTopic;
-      sensorTopic << "/" << GetId() << "/sensorTopic";
+		//Get Camera
+		m_pcCameraSensor = GetSensor<CCI_DroneCamerasSystemSensor>("drone_cameras_system");
+		m_pcCameraSensor->Visit(
+			[&](CCI_DroneCamerasSystemSensor::SInterface& s_interface) {
+				m_pcCameraInterface = &s_interface;
+			}
+		);
+		m_pcCameraInterface->Enable();
 
-      chatter_pub = nodeHandle->advertise<std_msgs::String>(sensorTopic.str(), 1000);
-   }
+		m_poseSensorPublisher = nodeHandle->advertise<geometry_msgs::Pose>(GetId() + "/poseSensor", 1000);
+		m_poseActuatorSubscriber = nodeHandle->subscribe(GetId() + "/poseActuator", 1000, &CDroneController::poseActuatorCallback, this);
+	}
 
-   /****************************************/
-   /****************************************/
+	/****************************************/
+	/****************************************/
 
-   void CTestController::ControlStep() {
-      CDebugDefaultActuator* pcDebugActuator =
-         GetActuator<CDebugDefaultActuator>("debug");
-      pcDebugActuator->m_pvecArrows->emplace_back(CVector3(0,0,1), CVector3(0,0,2), CColor::GREEN);
+	void CDroneController::ControlStep() {
+		// draw debug arrow
+		m_pcDebugActuator = GetActuator<CDebugDefaultActuator>("debug");
+		m_pcDebugActuator->m_pvecArrows->emplace_back(CVector3(0,0,1), CVector3(0,0,2), CColor::GREEN);
 
+		// read pose readings and publish to poseSensor topic
+		CVector3 currentPosition = m_pcFlightSystemSensor->GetPosition();
+		CVector3 currentOrientationInEuler = m_pcFlightSystemSensor->GetOrientation();
+		CQuaternion currentOrientation;
+		currentOrientation.FromEulerAngles(
+			CRadians(currentOrientationInEuler.GetZ()),
+			CRadians(currentOrientationInEuler.GetY()),
+			CRadians(currentOrientationInEuler.GetX())
+		);
 
+		geometry_msgs::Pose pose;
+		pose.position.x = currentPosition.GetX();
+		pose.position.y = currentPosition.GetY();
+		pose.position.z = currentPosition.GetZ();
+		pose.orientation.x = currentOrientation.GetX();
+		pose.orientation.y = currentOrientation.GetY();
+		pose.orientation.z = currentOrientation.GetZ();
+		pose.orientation.w = currentOrientation.GetW();
+		m_poseSensorPublisher.publish(pose);
 
-      cout << "I am step" << GetId() << endl;
+		// spin
+		ros::spinOnce();
+	}
 
-      std_msgs::String msg;
+	void CDroneController::poseActuatorCallback(const geometry_msgs::Pose& pose) {
+		m_pcFlightSystemActuator->SetTargetPosition(CVector3(
+			pose.position.x,
+			pose.position.y,
+			pose.position.z
+		));
+	}
 
-      std::stringstream ss;
-      ss << "I am " << GetId();
-      msg.data = ss.str();
-
-      ROS_INFO("%s", msg.data.c_str());
-
-      chatter_pub.publish(msg);
-      ros::spinOnce();
-   }
-
-   REGISTER_CONTROLLER(CTestController, "test_controller");
+	REGISTER_CONTROLLER(CDroneController, "test_controller");
 
 }
 

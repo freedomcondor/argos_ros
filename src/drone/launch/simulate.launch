@@ -1,0 +1,14 @@
+<launch>
+    <node name="run_argos" pkg="drone" type="run_argos.sh" output="screen" />
+    <node name="drone1" pkg="drone" type="flightSystem" output="screen">
+        <remap from="sensorTopic" to="drone1/sensorTopic" />
+        <remap from="poseSensor" to="drone1/poseSensor" />
+        <remap from="poseActuator" to="drone1/poseActuator" />
+    </node>
+    <node name="drone2" pkg="drone" type="flightSystem" output="screen">
+        <remap from="sensorTopic" to="drone2/sensorTopic" />
+        <remap from="poseSensor" to="drone2/poseSensor" />
+        <remap from="poseActuator" to="drone2/poseActuator" />
+    </node>
+    <node name="monitor" pkg="rqt_graph" type="rqt_graph" />
+</launch>
