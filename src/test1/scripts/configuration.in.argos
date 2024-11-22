@@ -1,0 +1,82 @@
+<?xml version="1.0" ?>
+<argos-configuration>
+
+  <!-- ************************* -->
+  <!-- * General configuration * -->
+  <!-- ************************* -->
+  <framework>
+    <system threads="0" />
+    <experiment length="0" ticks_per_second="10" random_seed="0" />
+  </framework>
+  
+  <!-- *************** -->
+  <!-- * Controllers * -->
+  <!-- *************** -->
+  <controllers>
+    <test_controller library="@CMAKE_BINARY_DIR@/../devel/lib/libdrone_ros_bridge_controller"
+                     id="argos_ros_bridge_drone">
+      <actuators>
+        <debug implementation="default" />
+        <drone_flight_system implementation="default" />
+      </actuators>
+      <sensors>
+        <drone_flight_system implementation="default" />
+        <drone_cameras_system implementation="default" show_frustum="true" show_tag_rays="true" />
+      </sensors>
+      <params />
+    </test_controller>
+  </controllers>
+
+  <!-- ****************** -->
+  <!-- * Loop functions * -->
+  <!-- ****************** -->
+  <loop_functions library="@CMAKE_BINARY_DIR@/../devel/lib/libmy_extensions"
+                  label="my_loop_functions" />
+
+  <!-- *********************** -->
+  <!-- * Arena configuration * -->
+  <!-- *********************** -->
+  <arena size="20, 20, 10" positional_index="grid" positional_grid_size="25,25,1">
+
+    <drone id="drone1">
+      <body position="-2,0,0" orientation="0,0,0"/>
+      <controller config="argos_ros_bridge_drone"/>
+    </drone>
+
+    <drone id="drone2">
+      <body position="-1,0,0" orientation="0,0,0"/>
+      <controller config="argos_ros_bridge_drone"/>
+    </drone>
+
+  </arena>
+
+  <!-- ******************* -->
+  <!-- * Physics engines * -->
+  <!-- ******************* -->
+  <physics_engines>
+    <pointmass3d id="pm3d" />
+  </physics_engines>
+
+  <!-- ********* -->
+  <!-- * Media * -->
+  <!-- ********* -->
+  <media>
+    <tag id="tags" index="grid" grid_size="20,20,20" />
+  </media>
+
+  <!-- ****************** -->
+  <!-- * Visualization * -->
+  <!-- ****************** -->
+  <visualization>
+    <qt-opengl show_boundary="false" >
+      <user_functions library="@CMAKE_BINARY_DIR@/../devel/lib/libmy_qtopengl_extensions"
+                      label="my_qtopengl_user_functions" />
+      <camera>
+        <placements>
+          <placement index="0" position="0,-0.1,25" look_at="0,0,0" up="0,0,1" lens_focal_length="30" />
+        </placements>
+      </camera>
+    </qt-opengl>
+  </visualization>
+
+</argos-configuration>
