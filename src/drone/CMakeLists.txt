@@ -17,9 +17,13 @@ catkin_package(CATKIN_DEPENDS
 	message_runtime
 )
 
+message(${catkin_INCLUDE_DIRS})
 include_directories(include ${catkin_INCLUDE_DIRS})
 
-add_executable(flightSystem src/flightSystem.cpp)
+add_executable(flightSystem
+	src/flightSystem.cpp
+	src/math/vector3.cpp
+)
 target_link_libraries(flightSystem ${catkin_LIBRARIES})
 
 configure_file(scripts/configuration.in.argos scripts/configuration.argos)
