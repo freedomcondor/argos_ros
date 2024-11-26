@@ -12,7 +12,7 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/ARGoSBuildOptions.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/ARGoSBuildFlags.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/ARGoSBuildChecks.cmake)
 
-# compile test controller
+# compile drone controller
 add_library(drone_ros_bridge_controller MODULE
   drone_ros_bridge_controller.h
   drone_ros_bridge_controller.cpp
@@ -28,10 +28,27 @@ target_link_libraries(drone_ros_bridge_controller
     /opt/ros/noetic/lib/libroscpp.so
 )
 
+# compile drawer controller
+add_library(drawer_controller MODULE
+  drawer_controller.h
+  drawer_controller.cpp
+  # add the debug actuator
+  extensions/debug/debug_entity.h
+  extensions/debug/debug_entity.cpp
+  extensions/debug/debug_default_actuator.h
+  extensions/debug/debug_default_actuator.cpp
+)
+target_link_libraries(drawer_controller
+    argos3core_${ARGOS_BUILD_FOR}
+    /opt/ros/noetic/lib/libroscpp.so
+)
+
 # compile with double # TODO : check necessary later
+#[[
 if(ARGOS_USE_DOUBLE)
   target_compile_definitions(drone_ros_bridge_controller PUBLIC BT_USE_DOUBLE_PRECISION)
 endif(ARGOS_USE_DOUBLE)
+]]
 
 #-------------------------------------------------------------------
 add_library(my_extensions SHARED
@@ -58,7 +75,11 @@ endif(ARGOS_USE_DOUBLE)
 
 if(ARGOS_QTOPENGL_FOUND)
   add_library(my_qtopengl_extensions SHARED
-    qtopengl_extensions/my_qtopengl_user_functions.h
-    qtopengl_extensions/my_qtopengl_user_functions.cpp
-  )
+              qtopengl_extensions/my_qtopengl_user_functions.h
+              qtopengl_extensions/my_qtopengl_user_functions.cpp
+              qtopengl_extensions/qtopengl_pipuck_ext_models.h
+              qtopengl_extensions/qtopengl_pipuck_ext.h
+              qtopengl_extensions/qtopengl_pipuck_ext.cpp)
+  target_link_libraries(my_qtopengl_extensions
+                        my_extensions)
 endif(ARGOS_QTOPENGL_FOUND)

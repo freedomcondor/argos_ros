@@ -15,30 +15,26 @@
 
 namespace argos {
 
-	class CDroneController : public CCI_Controller {
+	class CDrawerController : public CCI_Controller {
 
 	public:
 
-		CDroneController() {}
+		CDrawerController() {}
 
-		virtual ~CDroneController() {}
+		virtual ~CDrawerController() {}
 
 		virtual void Init(TConfigurationNode& t_tree);
 		virtual void ControlStep();
 
-		void poseActuatorCallback(const geometry_msgs::Pose& pose);
+		void debugActuatorCallback(const geometry_msgs::Pose& pose);
 
 	public:
 	// We need only a single ROS node, although there are individual publishers
 	// and subscribers for each instance of the class.
-		static ros::NodeHandle* nodeHandle;
-		ros::Publisher m_poseSensorPublisher;
-		ros::Subscriber m_poseActuatorSubscriber;
+		ros::NodeHandle* nodeHandle;
+		ros::Subscriber m_debugActuatorSubscriber;
 
-		CCI_DroneFlightSystemActuator* m_pcFlightSystemActuator;
-		CCI_DroneFlightSystemSensor* m_pcFlightSystemSensor;
-		CCI_DroneCamerasSystemSensor* m_pcCameraSensor;
-		CCI_DroneCamerasSystemSensor::SInterface* m_pcCameraInterface;
-		//CDebugDefaultActuator* m_pcDebugActuator;
+		CDebugDefaultActuator* m_pcDebugActuator;
+		CDebugDefaultActuator::TArrowVec arrowVec;
 	};
 }

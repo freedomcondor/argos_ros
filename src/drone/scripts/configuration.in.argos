@@ -13,18 +13,29 @@
   <!-- * Controllers * -->
   <!-- *************** -->
   <controllers>
-    <test_controller library="@CMAKE_BINARY_DIR@/../devel/lib/libdrone_ros_bridge_controller"
-                     id="argos_ros_bridge_drone">
+
+    <drone_controller library="@CMAKE_BINARY_DIR@/../devel/lib/libdrone_ros_bridge_controller"
+                      id="argos_ros_bridge_drone">
       <actuators>
         <debug implementation="default" />
-        <drone_flight_system implementation="default" />
+        <drone_flight_system implementation="default" global_mode="true"/>
       </actuators>
       <sensors>
         <drone_flight_system implementation="default" />
         <drone_cameras_system implementation="default" show_frustum="true" show_tag_rays="true" />
       </sensors>
       <params />
-    </test_controller>
+    </drone_controller>
+
+    <drawer_controller library="@CMAKE_BINARY_DIR@/../devel/lib/libdrawer_controller"
+                       id="drawer_controller">
+      <actuators>
+        <debug implementation="default" />
+      </actuators>
+      <sensors />
+      <params />
+    </drawer_controller>
+
   </controllers>
 
   <!-- ****************** -->
@@ -48,6 +59,11 @@
       <controller config="argos_ros_bridge_drone"/>
     </drone>
 
+    <pipuck_ext id="drawer">
+      <body position="0,0,0" orientation="0,0,0"/>
+      <controller config="drawer_controller"/>
+    </pipuck_ext>
+
   </arena>
 
   <!-- ******************* -->
@@ -55,6 +71,10 @@
   <!-- ******************* -->
   <physics_engines>
     <pointmass3d id="pm3d" />
+    <dynamics3d id="dyn3d" iterations="25">
+      <gravity g="9.8" />
+      <floor />
+    </dynamics3d>
   </physics_engines>
 
   <!-- ********* -->

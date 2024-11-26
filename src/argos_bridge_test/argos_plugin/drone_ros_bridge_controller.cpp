@@ -21,7 +21,6 @@ namespace argos {
 	}
 
 	ros::NodeHandle* CDroneController::nodeHandle = initROS();
-
 	/****************************************/
 	/****************************************/
 
@@ -29,6 +28,7 @@ namespace argos {
 		//Get flight system actuator / sensor
 		m_pcFlightSystemActuator = GetActuator<CCI_DroneFlightSystemActuator>("drone_flight_system");
 		m_pcFlightSystemSensor = GetSensor<CCI_DroneFlightSystemSensor>("drone_flight_system");
+//		m_pcDebugActuator = GetActuator<CDebugDefaultActuator>("debug");
 
 		//m_pcFlightSystemActuator->SetTargetPosition(CVector3(4.0, 0.0, 1.0));
 
@@ -50,8 +50,7 @@ namespace argos {
 
 	void CDroneController::ControlStep() {
 		// draw debug arrow
-		m_pcDebugActuator = GetActuator<CDebugDefaultActuator>("debug");
-		m_pcDebugActuator->m_pvecArrows->emplace_back(CVector3(0,0,1), CVector3(0,0,2), CColor::GREEN);
+		//m_pcDebugActuator->m_pvecArrows->emplace_back(CVector3(0,0,1), CVector3(0,0,2), CColor::GREEN);
 
 		// read pose readings and publish to poseSensor topic
 		CVector3 currentPosition = m_pcFlightSystemSensor->GetPosition();
@@ -67,10 +66,13 @@ namespace argos {
 		pose.position.x = currentPosition.GetX();
 		pose.position.y = currentPosition.GetY();
 		pose.position.z = currentPosition.GetZ();
+		/*
 		pose.orientation.x = currentOrientation.GetX();
 		pose.orientation.y = currentOrientation.GetY();
 		pose.orientation.z = currentOrientation.GetZ();
 		pose.orientation.w = currentOrientation.GetW();
+		*/
+		pose.orientation.z = currentOrientationInEuler.GetZ();  // abuse orientation.z as yaw
 		m_poseSensorPublisher.publish(pose);
 
 		// spin
@@ -83,9 +85,10 @@ namespace argos {
 			pose.position.y,
 			pose.position.z
 		));
+		m_pcFlightSystemActuator->SetTargetYawAngle(pose.orientation.z); // abuse orientation.z as yaw
 	}
 
-	REGISTER_CONTROLLER(CDroneController, "test_controller");
+	REGISTER_CONTROLLER(CDroneController, "drone_controller");
 
 }
 
